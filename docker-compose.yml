@@ -1,28 +1,36 @@
 version: '3.8'
 
 services:
-  # 第一台 Java 服务器
-  backend1:
-    build: .
+  # 1. MySQL 主库 (专门负责写)
+  mysql-master:
+    image: mysql:8.0
+    container_name: mysql-master
     ports:
-      - "8081:8080" # 把容器的 8080 映射到电脑的 8081
-
-  # 第二台 Java 服务器（负载均衡）
-  backend2:
-    build: .
-    ports:
-      - "8082:8080" # 把容器的 8080 映射到电脑的 8082
-
-  # Nginx 前台（动静分离）
-  nginx:
-    image: nginx:latest
-    ports:
-      - "80:80" # Nginx 监听默认的网页端口
+      - "3306:3306" # 主库用默认的 3306 端口
+    environment:
+      - MYSQL_ROOT_PASSWORD=root  # 统一把密码设为 root，方便测试
+      - MYSQL_DATABASE=seckill_db # 启动时自动创建我们需要的数据库
     volumes:
-      # 把我们刚才写的配置文件，挂载进 Nginx 肚子里
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      # 把前端 html 页面挂载进 Nginx 肚子里
-      - ./src/main/resources/static:/usr/share/nginx/html
-    depends_on:
-      - backend1
-      - backend2
+      - ./mysql/master/my.cnf:/etc/mysql/conf.d/my.cnf
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+  # 2. MySQL 从库 (专门负责读)
+  mysql-slave:
+    image: mysql:8.0
+    container_name: mysql-slave
+    ports:
+      - "3307:3306" # 从库映射到电脑的 3307 端口，防止冲突
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+    volumes:
+      - ./mysql/slave/my.cnf:/etc/mysql/conf.d/my.cnf
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+  # 3. Redis (顺便把后勤也用 Docker 管起来，以后再也不用手动开黑窗口了)
+  redis:
+    image: redis:latest
+    container_name: my-redis
+    ports:
+      - "6379:6379"
+
+  # （注意：我们先把 Java 和 Nginx 暂时注释掉或拿掉，专注把数据库的底层打通！）
