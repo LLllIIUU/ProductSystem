@@ -11,6 +11,7 @@ import com.example.demo.mapper.ProductMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.baomidou.dynamic.datasource.annotation.DS;// 导入动态数据源注解
+
 @Service
 public class ProductService {
     @Autowired
@@ -20,13 +21,13 @@ public class ProductService {
     private StringRedisTemplate redisTemplate; // 注入 Redis 模板
 
     private ObjectMapper objectMapper = new ObjectMapper(); // 用于对象和 JSON 之间的转换
-    
+
     @DS("slave") // 指定这个方法使用 "slave" 数据源
     public Product getProductById(Long id) {
         String cacheKey = "product:" + id;// 定义 Redis 里的钥匙名
         String lockKey = "lock:product:" + id; // 分布式锁的钥匙名
         try {
-            // ================= 1. 先查 Redis 缓存 =================
+            // 1. 先查 Redis 缓存
             String productJson = redisTemplate.opsForValue().get(cacheKey);
 
             if (productJson != null) {
@@ -39,11 +40,11 @@ public class ProductService {
                 return objectMapper.readValue(productJson, Product.class);
             }
 
-            // ================= 2. 缓存没有命中，尝试拿分布式锁 =================
+            // 2. 缓存没有命中，尝试拿分布式锁
             Boolean isLock = redisTemplate.opsForValue().setIfAbsent(lockKey, "1", 10, TimeUnit.SECONDS);
             if (Boolean.TRUE.equals(isLock)) {
                 System.out.println("拿到互斥锁！作为代表老老实实去查 MySQL...");
-                // ================= 3. 拿到锁的人，去mysql查数据 =================
+                // 3. 拿到锁的人，去mysql查数据
                 try {
                     Product product = productMapper.findById(id);
 

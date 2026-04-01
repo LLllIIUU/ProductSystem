@@ -8,7 +8,7 @@ services:
     ports:
       - "3306:3306" # 主库用默认的 3306 端口
     environment:
-      - MYSQL_ROOT_PASSWORD=root  # 统一把密码设为 root，方便测试
+      - MYSQL_ROOT_PASSWORD=root # 统一把密码设为 root，方便测试
       - MYSQL_DATABASE=seckill_db # 启动时自动创建我们需要的数据库
     volumes:
       - ./mysql/master/my.cnf:/etc/mysql/conf.d/my.cnf
@@ -26,11 +26,34 @@ services:
       - ./mysql/slave/my.cnf:/etc/mysql/conf.d/my.cnf
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
 
-  # 3. Redis (顺便把后勤也用 Docker 管起来，以后再也不用手动开黑窗口了)
+  # 3. Redis
   redis:
     image: redis:latest
     container_name: my-redis
     ports:
       - "6379:6379"
 
-  # （注意：我们先把 Java 和 Nginx 暂时注释掉或拿掉，专注把数据库的底层打通！）
+  # 4. Zookeeper Confluent 版本
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: my-zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  # 5. Kafka 消息队列 Confluent 版本
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: my-kafka
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://127.0.0.1:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
