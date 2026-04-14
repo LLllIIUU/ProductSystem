@@ -1,9 +1,10 @@
 package com.example.demo.mapper;
 
-import com.example.demo.entity.Order;
+import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
-import org.apache.ibatis.annotations.Insert;
+
+import com.example.demo.entity.Order;
 
 @Mapper
 public interface OrderMapper {
@@ -15,4 +16,7 @@ public interface OrderMapper {
 
     @Select("SELECT * FROM orders WHERE user_id = #{userId}")
     java.util.List<Order> selectByUserId(Long userId);
+
+    @org.apache.ibatis.annotations.Update("UPDATE orders SET status = 1 WHERE id = #{orderId}")
+    int payOrder(Long orderId);
 }
