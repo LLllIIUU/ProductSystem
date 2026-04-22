@@ -5,10 +5,21 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.beans.factory.annotation.Value;
 
 @RestController
 @RequestMapping("/api/seckill")
+@RefreshScope
 public class SeckillController {
+
+    @Value("${seckill.notice:这是默认公告(从代码里读出来的)}")
+    private String notice;
+
+    @GetMapping("/notice")
+    public String getNotice() {
+        return "当前系统公告：" + notice;
+    }
 
     // 注入 OrderMapper 用来查询数据库
     @Autowired
@@ -17,7 +28,7 @@ public class SeckillController {
     // 按订单ID查询订单，测试网址：http://localhost:8080/api/seckill/order?orderId=2039227070545100800
     @GetMapping("/order")
     public com.example.demo.entity.Order getOrderById(@RequestParam Long orderId) {
-         return orderMapper.selectById(orderId);
+        return orderMapper.selectById(orderId);
     }
 
     // 按用户ID查询订单，测试网址：http://localhost:8080/api/seckill/order/user?userId=5515

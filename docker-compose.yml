@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # 1. MySQL 主库 (专门负责写)
+  # MySQL 主库 (专门负责写)
   mysql-master:
     image: mysql:8.0
     container_name: mysql-master
@@ -14,7 +14,7 @@ services:
       - ./mysql/master/my.cnf:/etc/mysql/conf.d/my.cnf
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
 
-  # 2. MySQL 从库 (专门负责读)
+  # MySQL 从库 (专门负责读)
   mysql-slave:
     image: mysql:8.0
     container_name: mysql-slave
@@ -26,14 +26,14 @@ services:
       - ./mysql/slave/my.cnf:/etc/mysql/conf.d/my.cnf
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
 
-  # 3. Redis
+  # Redis
   redis:
     image: redis:latest
     container_name: my-redis
     ports:
       - "6379:6379"
 
-  # 4. Zookeeper Confluent 版本
+  # Zookeeper Confluent 版本
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     container_name: my-zookeeper
@@ -43,7 +43,7 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
 
-  # 5. Kafka 消息队列 Confluent 版本
+  # Kafka 消息队列 Confluent 版本
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     container_name: my-kafka
@@ -57,3 +57,25 @@ services:
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://127.0.0.1:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  # Nacos 注册中心与配置中心
+  nacos:
+      image: nacos/nacos-server:v2.2.3
+      container_name: my-nacos
+      environment:
+        - PREFER_HOST_MODE=hostname
+        - MODE=standalone # 必须是单机模式，不然你的电脑内存会爆炸
+        - NACOS_AUTH_ENABLE=false # 开启鉴权，规避一些新版本的报错
+      ports:
+        - "8848:8848" # Nacos 网页控制台端口
+        - "9848:9848" # Nacos 客户端通信端口
+        - "9849:9849"
+      restart: always
+# Sentinel 流量治理控制台
+  sentinel:
+    image: bladex/sentinel-dashboard:1.8.6
+    container_name: sentinel
+    ports:
+      - "8858:8858"
+    environment:
+      - SERVER_PORT=8858

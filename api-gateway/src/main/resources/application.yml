@@ -1,0 +1,15 @@
+server:
+  port: 80 # 网关统一暴露 80 端口（浏览器默认端口，访问时可不写）
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848 # 去 Nacos 报到
+    gateway:
+      discovery:
+        locator:
+          enabled: true # 开启超级大招：根据服务名自动动态路由！
+          lower-case-service-id: true # 服务名统一转小写
